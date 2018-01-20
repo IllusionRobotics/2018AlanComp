@@ -95,7 +95,7 @@ public class Robot extends IterativeRobot {
 		case kBaselineAuto:
 			while (isAutonomous() && isEnabled())
 			{
-				for (int a = 0; a < 200000; a++)
+				for (int a = 0; a < 90000; a++)
 				{
 					drive.tankDrive(0.5, 0.5);
 				}
@@ -108,57 +108,69 @@ public class Robot extends IterativeRobot {
 				if(gameData.charAt(0) == 'L')
 				{
 					//Put left auto code here
-					for (int a = 0; a < 200000; a++)
+					//Go forward
+					for (int a = 0; a < 20000; a++)
 					{
 						drive.tankDrive(0.5, 0.5);
 					}	
-					Timer.delay(2);
-					for (int b = 0; b < 50000;  b++)
+					Timer.delay(1);
+					//Spin Left
+					for (int b = 0; b < 20000;  b++)
 					{
 						drive.tankDrive(-0.5, 0.5);
 					}
-					for (int c = 0; c < 100000; c++)
+					//Go Forward
+					for (int c = 0; c < 40000; c++)
 					{
 						drive.tankDrive(0.5, 0.5);
 					}
-					Timer.delay(2);
-					for (int d = 0; d < 50000;  d++)
+					Timer.delay(1);
+					//Spin back Right
+					for (int d = 0; d < 16500;  d++)
 					{
 						drive.tankDrive(0.5,-0.5);
 					}
 					Timer.delay(1);
-					for (int e = 0; e < 200000;  e++)
+					//Go forward to fence
+					for (int e = 0; e < 55000;  e++)
 					{
 						drive.tankDrive(0.5, 0.5);
 					}
 					Timer.delay(10);
+					break;
 				}
 				else {
 					//Put right auto code here
-					for (int a = 0; a < 200000; a++)
+					//Go forward
+					for (int a = 0; a < 20000; a++)
 					{
 						drive.tankDrive(0.5, 0.5);
 					}	
-					Timer.delay(2);
-					for (int b = 0; b < 50000;  b++)
+					Timer.delay(1);
+					//Spin Right
+					for (int b = 0; b < 20000;  b++)
 					{
 						drive.tankDrive(0.5, -0.5);
 					}
-					for (int c = 0; c < 100000; c++)
+					//Go Forward
+					for (int c = 0; c < 40000; c++)
 					{
 						drive.tankDrive(0.5, 0.5);
 					}
-					Timer.delay(2);
-					for (int d = 0; d < 50000;  d++)
+					//Spin back Right
+					Timer.delay(1);
+					for (int d = 0; d < 16500;  d++)
 					{
 						drive.tankDrive(-0.5, 0.5);
 					}
 					Timer.delay(1);
-					for (int e = 0; e < 200000;  e++)
+					//Go forward to fence
+					for (int e = 0; e < 55000;  e++)
 					{
 						drive.tankDrive(0.5, 0.5);
 					}
 					Timer.delay(10);
+					break;
 				}
 			}
 
@@ -175,11 +187,11 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() 
 	{
-		while(isOperatorControl() && isEnabled());
+		while(isOperatorControl() && isEnabled())
 		{
-			drive.arcadeDrive(Joy.getY(), Joy.getX());
+			drive.arcadeDrive(-Joy.getY(), Joy.getX());
 			//Note: Make sure to look at other arcadeDrive commands in case this one doesn't work.
-
+				
 			/**BIGNOTE: Remember to code in extra components once the team comes to consensus
 			 * 
 			 */
