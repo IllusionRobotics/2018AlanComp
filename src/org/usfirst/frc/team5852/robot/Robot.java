@@ -31,9 +31,13 @@ public class Robot extends IterativeRobot {
 	SpeedControllerGroup left = new SpeedControllerGroup(frontLeft, rearLeft);
 	SpeedControllerGroup right = new SpeedControllerGroup(frontRight, rearRight);
 
+	//Intake
 	Talon intake     = new Talon(4);
-
-
+	Compressor c = new Compressor(0);
+	//Solenoid4Arm
+	DoubleSolenoid Grabnoid = new DoubleSolenoid(0,1);
+	
+	
 	/**Note: Not sure how our extra mechanical components are going to be, 
 	how they're named etc. */
 	//Drivetrain
@@ -45,16 +49,17 @@ public class Robot extends IterativeRobot {
 	//Buttons
 	int Xaxis   = 0;
 	int Yaxis   = 1;
-	//int Abutton = 2;
-	//int buttonY = 4;
-	//int ForTrigger = 1;
-	//int button3 = 3;
-	int centerx = 320;
-	int centery = 240;
+	int buttonA = 2;
+	int buttonretract = 3;
+	int buttonexpand = 4;
+	
+	/**	This was from last year's autonomous, don't know if it will be used this year once we get encoders/do vision processing
+	 * int centerx = 320;
+		int centery = 240;
+	 */
 
-	/** Currently keeping the same joystick system for right bar extra components
-	 * from scrappy, like the climber, we'll troubleshoot once we can get a moving 
-	 * chassis.
+	/** Currently keeping the same joystick system for right now, bar extra components
+	 * from scrappy, like the climber.
 	 */
 
 	@Override
@@ -190,8 +195,20 @@ public class Robot extends IterativeRobot {
 		while(isOperatorControl() && isEnabled())
 		{
 			drive.arcadeDrive(-Joy.getY(), Joy.getX());
-			//Note: Make sure to look at other arcadeDrive commands in case this one doesn't work.
-				
+
+			c.setClosedLoopControl(true);
+			Grabnoid.set(DoubleSolenoid.Value.kOff);
+			
+			if(Joy.getRawButton(buttonexpand));
+			{
+				Grabnoid.set(DoubleSolenoid.Value.kForward);
+			}
+			
+			//NOTE: No idea how the pneumatics is wired, so I don't know that the retraction & extraction side does.
+			if(Joy.getRawButton(buttonretract));
+			{
+				Grabnoid.set(DoubleSolenoid.Value.kReverse);
+			}
 			/**BIGNOTE: Remember to code in extra components once the team comes to consensus
 			 * 
 			 */
