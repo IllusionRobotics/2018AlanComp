@@ -36,8 +36,8 @@ public class Robot extends IterativeRobot {
 	Compressor c = new Compressor(0);
 	//Solenoid4Arm
 	DoubleSolenoid Grabnoid = new DoubleSolenoid(0,1);
-	
-	
+
+
 	/**Note: Not sure how our extra mechanical components are going to be, 
 	how they're named etc. */
 	//Drivetrain
@@ -52,7 +52,12 @@ public class Robot extends IterativeRobot {
 	int buttonA = 2;
 	int buttonretract = 3;
 	int buttonexpand = 4;
-	
+
+	//Encoders
+	//Encoder enc;
+	//	enc encoder = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
+	//Sticking with FGPA, not messing with unless we get aigger sense of what to do
+
 	/**	This was from last year's autonomous, don't know if it will be used this year once we get encoders/do vision processing
 	 * int centerx = 320;
 		int centery = 240;
@@ -198,14 +203,14 @@ public class Robot extends IterativeRobot {
 
 			c.setClosedLoopControl(true);
 			Grabnoid.set(DoubleSolenoid.Value.kOff);
-			
-			if(Joy.getRawButton(buttonexpand));
+			//
+			if(Joy.getRawButton(buttonretract))
 			{
 				Grabnoid.set(DoubleSolenoid.Value.kForward);
 			}
-			
+
 			//NOTE: No idea how the pneumatics is wired, so I don't know that the retraction & extraction side does.
-			if(Joy.getRawButton(buttonretract));
+			if(Joy.getRawButton(buttonexpand))
 			{
 				Grabnoid.set(DoubleSolenoid.Value.kReverse);
 			}
