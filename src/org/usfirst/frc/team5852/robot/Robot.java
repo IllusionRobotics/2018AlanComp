@@ -31,9 +31,17 @@ public class Robot extends IterativeRobot {
 	SpeedControllerGroup left = new SpeedControllerGroup(frontLeft, rearLeft);
 	SpeedControllerGroup right = new SpeedControllerGroup(frontRight, rearRight);
 
-	//Intake
+	//Intake & Compressor
 	Talon intake     = new Talon(4);
+	
 	Compressor c = new Compressor(0);
+	
+	boolean enabled = c.enabled();
+	
+	boolean pressureSwitch = c.getPressureSwitchValue();
+	
+	double current = c.getCompressorCurrent();
+	
 	//Solenoid4Arm
 	DoubleSolenoid Grabnoid = new DoubleSolenoid(0,1);
 
@@ -202,7 +210,8 @@ public class Robot extends IterativeRobot {
 			drive.arcadeDrive(-Joy.getY(), Joy.getX());
 
 			c.setClosedLoopControl(true);
-			Grabnoid.set(DoubleSolenoid.Value.kOff);
+			
+					Grabnoid.set(DoubleSolenoid.Value.kOff);
 			//
 			if(Joy.getRawButton(buttonretract))
 			{
