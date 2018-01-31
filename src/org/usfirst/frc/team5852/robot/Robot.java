@@ -7,7 +7,6 @@
 
 package org.usfirst.frc.team5852.robot;
 
-import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -18,6 +17,7 @@ public class Robot extends IterativeRobot {
 	private static final String kDefaultAuto  = "Default";
 	private static final String kBaselineAuto = "BaselineAuto";
 	private static final String kSwitchAuto   = "SwitchAuto";
+	private static final String kEncoderTest  = "EncoderTest";
 	private String m_autoSelected;
 	private SendableChooser<String> m_chooser = new SendableChooser<>();
 	String gameData;
@@ -34,6 +34,7 @@ public class Robot extends IterativeRobot {
 	//Intake
 	Talon intake     = new Talon(4);
 	Compressor c = new Compressor(0);
+
 	//Solenoid4Arm
 	DoubleSolenoid Grabnoid = new DoubleSolenoid(0,1);
 
@@ -49,14 +50,16 @@ public class Robot extends IterativeRobot {
 	//Buttons
 	int Xaxis   = 0;
 	int Yaxis   = 1;
-	int buttonA = 2;
 	int buttonretract = 3;
 	int buttonexpand = 4;
 
 	//Encoders
-	//Encoder enc;
-	//	enc encoder = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
-	//Sticking with FGPA, not messing with unless we get aigger sense of what to do
+	Encoder encoder = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
+
+	public void setMaxPeriod() {
+		encoder.setMaxPeriod(0.1);
+	}
+	//Sticking with FGPA, not messing with unless we get a bigger sense of what to do
 
 	/**	This was from last year's autonomous, don't know if it will be used this year once we get encoders/do vision processing
 	 * int centerx = 320;
@@ -92,7 +95,6 @@ public class Robot extends IterativeRobot {
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
 		System.out.println("Auto selected: " + m_autoSelected);
-
 		gameData = DriverStation.getInstance().getGameSpecificMessage();
 	}
 
@@ -183,10 +185,21 @@ public class Robot extends IterativeRobot {
 					break;
 				}
 			}
+		case kEncoderTest:
+			while (isAutonomous() && isEnabled())
+			{
+				encoder.reset();
 
+				while (encoder.get() < 1)
+				{
+					drive.tankDrive(0.5, 0.5);
+				}
+			}
+			drive.tankDrive(0, 0);
+			break;
 		case kDefaultAuto:
 		default:
-			// Put default auto code here
+			// Put default auto code here Encoder TEST
 			break; 
 		}
 	}
@@ -202,14 +215,13 @@ public class Robot extends IterativeRobot {
 			drive.arcadeDrive(-Joy.getY(), Joy.getX());
 
 			c.setClosedLoopControl(true);
+
 			Grabnoid.set(DoubleSolenoid.Value.kOff);
-			//
+
 			if(Joy.getRawButton(buttonretract))
 			{
 				Grabnoid.set(DoubleSolenoid.Value.kForward);
 			}
-
-			//NOTE: No idea how the pneumatics is wired, so I don't know that the retraction & extraction side does.
 			if(Joy.getRawButton(buttonexpand))
 			{
 				Grabnoid.set(DoubleSolenoid.Value.kReverse);
