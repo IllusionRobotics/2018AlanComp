@@ -24,11 +24,11 @@ public class Robot extends IterativeRobot {
 
 	//Speed Controllers
 
-	Talon frontLeft  = new Talon(0);
-	Talon frontRight = new Talon(1);
-	Talon rearLeft   = new Talon(2);
-	Talon rearRight  = new Talon(3);
-	SpeedControllerGroup left = new SpeedControllerGroup(frontLeft, rearLeft);
+	Spark frontLeft  = new Spark(0);
+	Spark rearLeft   = new Spark(1);
+	Spark frontRight = new Spark(2);
+	Spark rearRight  = new Spark(3);
+	SpeedControllerGroup left  = new SpeedControllerGroup(frontLeft, rearLeft);
 	SpeedControllerGroup right = new SpeedControllerGroup(frontRight, rearRight);
 
 	//Intake
@@ -54,11 +54,20 @@ public class Robot extends IterativeRobot {
 	int buttonexpand = 4;
 
 	//Encoders
-	Encoder encoder = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
+	Encoder encoderleft  = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
+	Encoder encoderright = new Encoder(2, 3, false, Encoder.EncodingType.k4X);
 
-	public void setMaxPeriod() {
+	public static final double wheelDiameter = 6;
+	public static final double pulsePerRevolution = 2048;
+	public static final double encoderGearRatio = 1;
+	public static final double gearRatio = 12.75/1;
+	public static final double Fudgefactor = 1.0;
+	final double distanceperpulse = Math.PI*wheelDiameter/pulsePerRevolution / encoderGearRatio/gearRatio * Fudgefactor;
+	
+	/**	public void setMaxPeriod() {
 		encoder.setMaxPeriod(0.1);
 	}
+	 */
 	//Sticking with FGPA, not messing with unless we get a bigger sense of what to do
 
 	/**	This was from last year's autonomous, don't know if it will be used this year once we get encoders/do vision processing
@@ -75,7 +84,13 @@ public class Robot extends IterativeRobot {
 		m_chooser.addDefault("Default Auto", kDefaultAuto);
 		m_chooser.addObject("BaselineAuto", kBaselineAuto);
 		m_chooser.addObject("SwitchAuto", kSwitchAuto);
+		m_chooser.addObject("EncoderTest", kEncoderTest);
 		SmartDashboard.putData("Auto choices", m_chooser);
+
+		encoderleft.setMaxPeriod(1);
+		encoderleft.setDistancePerPulse(distanceperpulse);
+		encoderright.setMaxPeriod(1);
+		encoderright.setDistancePerPulse(distanceperpulse);
 	}
 
 	/**
@@ -96,6 +111,8 @@ public class Robot extends IterativeRobot {
 		// defaultAuto);
 		System.out.println("Auto selected: " + m_autoSelected);
 		gameData = DriverStation.getInstance().getGameSpecificMessage();
+		encoderleft.reset();
+		encoderright.reset();
 	}
 
 	/**
@@ -188,11 +205,15 @@ public class Robot extends IterativeRobot {
 		case kEncoderTest:
 			while (isAutonomous() && isEnabled())
 			{
-				encoder.reset();
-
-				while (encoder.get() < 1)
+				if (encoderleft.getDistance() < 10 && encoderright.getDistance() > -10)
 				{
 					drive.tankDrive(0.5, 0.5);
+					System.out.println(encoderleft.getDistance());
+					System.out.println(encoderright.getDistance());
+				}
+				else
+				{
+					drive.tankDrive(0, 0);
 				}
 			}
 			drive.tankDrive(0, 0);
