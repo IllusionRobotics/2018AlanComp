@@ -4,12 +4,11 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-
-//test
-
+/**
+ * NOTE: Same as practice bot code due to failing at github, will add components later.
+ **/
 package org.usfirst.frc.team5852.robot;
 
-import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -20,32 +19,26 @@ public class Robot extends IterativeRobot {
 	private static final String kDefaultAuto  = "Default";
 	private static final String kBaselineAuto = "BaselineAuto";
 	private static final String kSwitchAuto   = "SwitchAuto";
+	private static final String kEncoderTestLeft  = "EncoderTestLeft";
 	private String m_autoSelected;
 	private SendableChooser<String> m_chooser = new SendableChooser<>();
 	String gameData;
 
 	//Speed Controllers
 
-	Talon frontLeft  = new Talon(0);
-	Talon frontRight = new Talon(1);
-	Talon rearLeft   = new Talon(2);
-	Talon rearRight  = new Talon(3);
-	SpeedControllerGroup left = new SpeedControllerGroup(frontLeft, rearLeft);
+	Spark frontLeft  = new Spark(0);
+	Spark rearLeft   = new Spark(1);
+	Spark frontRight = new Spark(2);
+	Spark rearRight  = new Spark(3);
+	SpeedControllerGroup left  = new SpeedControllerGroup(frontLeft, rearLeft);
 	SpeedControllerGroup right = new SpeedControllerGroup(frontRight, rearRight);
 
-	//Intake & Compressor
-	Talon intake     = new Talon(4);
-	
-	Compressor c = new Compressor(0);
-	
-	boolean enabled = c.enabled();
-	
-	boolean pressureSwitch = c.getPressureSwitchValue();
-	
-	double current = c.getCompressorCurrent();
-	
+	//Intake
+	Spark intake     = new Spark(4);
+	//Compressor c = new Compressor(0);
+
 	//Solenoid4Arm
-	DoubleSolenoid Grabnoid = new DoubleSolenoid(0,1);
+	//DoubleSolenoid Grabnoid = new DoubleSolenoid(0,1);
 
 
 	/**Note: Not sure how our extra mechanical components are going to be, 
@@ -59,14 +52,21 @@ public class Robot extends IterativeRobot {
 	//Buttons
 	int Xaxis   = 0;
 	int Yaxis   = 1;
-	int buttonA = 2;
 	int buttonretract = 3;
 	int buttonexpand = 4;
 
 	//Encoders
-	//Encoder enc;
-	//	enc encoder = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
-	//Sticking with FGPA, not messing with unless we get aigger sense of what to do
+	Encoder encoderleft  = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
+	Encoder encoderright = new Encoder(2, 3, false, Encoder.EncodingType.k4X);
+
+	public static final double wheelDiameter = 6;
+	public static final double pulsePerRevolution = 2048;
+	public static final double encoderGearRatio = 1;
+	public static final double gearRatio = 12.75/1;
+	public static final double Fudgefactor = 1.0;
+	final double distanceperpulse = Math.PI*wheelDiameter/pulsePerRevolution / encoderGearRatio/gearRatio * Fudgefactor;
+
+	//Sticking with FGPA, not messing with unless we get a bigger sense of what to do
 
 	/**	This was from last year's autonomous, don't know if it will be used this year once we get encoders/do vision processing
 	 * int centerx = 320;
@@ -82,7 +82,14 @@ public class Robot extends IterativeRobot {
 		m_chooser.addDefault("Default Auto", kDefaultAuto);
 		m_chooser.addObject("BaselineAuto", kBaselineAuto);
 		m_chooser.addObject("SwitchAuto", kSwitchAuto);
+		m_chooser.addObject("EncoderTestLeft", kEncoderTestLeft);
 		SmartDashboard.putData("Auto choices", m_chooser);
+		encoderleft.setMaxPeriod(1);
+		encoderleft.setDistancePerPulse(distanceperpulse);
+		encoderright.setMaxPeriod(1);
+		encoderright.setDistancePerPulse(distanceperpulse);
+		encoderleft.reset();
+		encoderright.reset();
 	}
 
 	/**
@@ -102,8 +109,9 @@ public class Robot extends IterativeRobot {
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
 		System.out.println("Auto selected: " + m_autoSelected);
-
 		gameData = DriverStation.getInstance().getGameSpecificMessage();
+		encoderleft.reset();
+		encoderright.reset();	
 	}
 
 	/**
@@ -129,7 +137,7 @@ public class Robot extends IterativeRobot {
 				{
 					//Put left auto code here
 					//Go forward
-					for (int a = 0; a < 20000; a++)
+					for (int a = 0; a < 200000; a++)
 					{
 						drive.tankDrive(0.5, 0.5);
 					}	
@@ -193,10 +201,58 @@ public class Robot extends IterativeRobot {
 					break;
 				}
 			}
-
+		case kEncoderTestLeft:
+			encoderleft.reset();
+			encoderright.reset();
+			while (isAutonomous() && isEnabled())
+			{	
+				System.out.println(encoderright.getDistance());
+				System.out.println(encoderleft.getDistance());
+				if(gameData.charAt(0) == 'L')
+				{
+					if (encoderleft.getDistance() < 6 && encoderright.getDistance() > -6)
+						//encoderleft values at distance 6 is around 8100
+						//encoderright values at distance -6 is around -8350
+					{
+						drive.tankDrive(0.66, 0.67);
+					}
+					else if (encoderright.getDistance() > -7.5)
+						//turns go in increments of 1.5 for kitbot
+					{
+						drive.tankDrive(-1, 1);
+					}
+					//after turn above, encoder right reads around -8.25/.26, encoder left reads around 4.57
+					else if (encoderleft.getDistance() < 12.07 && encoderright.getDistance() > -15.76)
+						//Added abt. 7.5 feet.
+					{
+						drive.tankDrive(0.66, 0.67);
+					}
+					//after drive above, encoders read at abt. 12.35 and -16.36
+					else if (encoderleft.getDistance() < 13.35)
+					{
+						drive.tankDrive(1, -1);
+					}
+					//after turn above, encoders read around 14.3 & -14.9
+					else if (encoderleft.getDistance() < 17.3 && encoderright.getDistance() > -17.9)
+						//3 ft
+					{
+						drive.tankDrive(0.66, 0.67);
+					}
+					//after drive, 17.65 & -18.50
+					else if (encoderleft.getDistance() < 19.15)
+					{
+						drive.tankDrive(-1, 1);
+					}
+					else
+					{
+						drive.tankDrive(0, 0);
+					}
+				}
+			}
+			break;
 		case kDefaultAuto:
 		default:
-			// Put default auto code here
+			// Put default auto code here Encoder TEST
 			break; 
 		}
 	}
@@ -207,24 +263,27 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() 
 	{
+		//encoderright.reset();
+		//encoderleft.reset();
 		while(isOperatorControl() && isEnabled())
 		{
+			SmartDashboard.putNumber("Encoder Right", encoderright.getDistance());
+			SmartDashboard.putNumber("Encoder Left", encoderleft.getDistance());
 			drive.arcadeDrive(-Joy.getY(), Joy.getX());
 
-			c.setClosedLoopControl(true);
-			
-					Grabnoid.set(DoubleSolenoid.Value.kOff);
-			//
-			if(Joy.getRawButton(buttonretract))
-			{
+			//c.setClosedLoopControl(true);
+
+			//Grabnoid.set(DoubleSolenoid.Value.kOff);
+
+			//if(Joy.getRawButton(buttonretract))
+			/**{
 				Grabnoid.set(DoubleSolenoid.Value.kForward);
 			}
-
-			//NOTE: No idea how the pneumatics is wired, so I don't know that the retraction & extraction side does.
 			if(Joy.getRawButton(buttonexpand))
 			{
 				Grabnoid.set(DoubleSolenoid.Value.kReverse);
 			}
+			 */
 			/**BIGNOTE: Remember to code in extra components once the team comes to consensus
 			 * 
 			 */
