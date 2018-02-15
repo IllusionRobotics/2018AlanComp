@@ -19,7 +19,7 @@ public class Robot extends IterativeRobot {
 	private static final String kDefaultAuto  = "Default";
 	private static final String kBaselineAuto = "BaselineAuto";
 	private static final String kSwitchAuto   = "SwitchAuto";
-	private static final String kEncoderTestLeft  = "EncoderTestLeft";
+	private static final String kEncoderTest  = "EncoderTest";
 	private String m_autoSelected;
 	private SendableChooser<String> m_chooser = new SendableChooser<>();
 	String gameData;
@@ -82,7 +82,7 @@ public class Robot extends IterativeRobot {
 		m_chooser.addDefault("Default Auto", kDefaultAuto);
 		m_chooser.addObject("BaselineAuto", kBaselineAuto);
 		m_chooser.addObject("SwitchAuto", kSwitchAuto);
-		m_chooser.addObject("EncoderTestLeft", kEncoderTestLeft);
+		m_chooser.addObject("EncoderTest", kEncoderTest);
 		SmartDashboard.putData("Auto choices", m_chooser);
 		encoderleft.setMaxPeriod(1);
 		encoderleft.setDistancePerPulse(distanceperpulse);
@@ -201,7 +201,7 @@ public class Robot extends IterativeRobot {
 					break;
 				}
 			}
-		case kEncoderTestLeft:
+		case kEncoderTest:
 			encoderleft.reset();
 			encoderright.reset();
 			while (isAutonomous() && isEnabled())
@@ -219,35 +219,86 @@ public class Robot extends IterativeRobot {
 					else if (encoderright.getDistance() > -7.5)
 						//turns go in increments of 1.5 for kitbot
 					{
-						drive.tankDrive(-1, 1);
+						drive.tankDrive(-0.75, 0.75);
 					}
 					//after turn above, encoder right reads around -8.25/.26, encoder left reads around 4.57
-					else if (encoderleft.getDistance() < 12.07 && encoderright.getDistance() > -15.76)
-						//Added abt. 7.5 feet.
+					else if (encoderleft.getDistance() < 13.57 && encoderright.getDistance() > -19.26)
+						//Added abt. 9 feet.
 					{
-						drive.tankDrive(0.66, 0.67);
+						drive.tankDrive(0.67, 0.66);
 					}
 					//after drive above, encoders read at abt. 12.35 and -16.36
-					else if (encoderleft.getDistance() < 13.35)
+					else if (encoderleft.getDistance() < 15.25)
 					{
-						drive.tankDrive(1, -1);
+						drive.tankDrive(0.75, -0.75);
 					}
-					//after turn above, encoders read around 14.3 & -14.9
-					else if (encoderleft.getDistance() < 17.3 && encoderright.getDistance() > -17.9)
-						//3 ft
+					//after turn above, encoders read around 15.53 & -15.51
+					else if (encoderleft.getDistance() < 20.53 && encoderright.getDistance() > -20.51)
+						//6 ft
 					{
-						drive.tankDrive(0.66, 0.67);
+						drive.tankDrive(0.67, 0.66);
 					}
-					//after drive, 17.65 & -18.50
-					else if (encoderleft.getDistance() < 19.15)
+					//after drive, 20.82 & -21.14
+					else if (encoderleft.getDistance() < 21.91)
 					{
-						drive.tankDrive(-1, 1);
+						drive.tankDrive(0.75, -0.75);
+					}
+					//encoders read around -19.96 and 22.21
+					else if (encoderleft.getDistance() < 23.21 && encoderright.getDistance() > -20.96)
+					{
+						drive.tankDrive(0.5, 0.5);
 					}
 					else
 					{
 						drive.tankDrive(0, 0);
 					}
 				}
+				else
+				{
+					if (encoderleft.getDistance() < 6 && encoderright.getDistance() > -6)
+						//encoderleft values at distance 6 is around 8100
+						//encoderright values at distance -6 is around -8350
+					{
+						drive.tankDrive(0.66, 0.67);
+					}
+					else if (encoderleft.getDistance() < 7.5)
+						//turns go in increments of 1.5 for kitbot
+					{
+						drive.tankDrive(0.75, -0.75);
+					}
+					//after turn above, encoder right reads around -8.25/.26, encoder left reads around 4.57
+					else if (encoderleft.getDistance() < 19.26 && encoderright.getDistance() > -13.57)
+						//Added abt. 9 feet.
+					{
+						drive.tankDrive(0.67, 0.66);
+					}
+					//after drive above, encoders read at abt. 12.35 and -16.36
+					else if (encoderright.getDistance() > -15.25)
+					{
+						drive.tankDrive(0.75, -0.75);
+					}
+					//after turn above, encoders read around 15.53 & -15.51
+					else if (encoderleft.getDistance() < 20.51 && encoderright.getDistance() > -20.53)
+						//6 ft
+					{
+						drive.tankDrive(0.67, 0.66);
+					}
+					//after drive, 20.82 & -21.14
+					else if (encoderright.getDistance() < -21.91)
+					{
+						drive.tankDrive(0.75, -0.75);
+					}
+					//encoders read around -19.96 and 22.21
+					else if (encoderleft.getDistance() < 23.21 && encoderright.getDistance() > -20.96)
+					{
+						drive.tankDrive(0.5, 0.5);
+					}
+					else
+					{
+						drive.tankDrive(0, 0);
+					}
+				}
+				 
 			}
 			break;
 		case kDefaultAuto:
