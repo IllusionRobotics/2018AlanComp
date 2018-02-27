@@ -4,28 +4,27 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-/**
- * NOTE: Same as practice bot code due to failing at github, will add components later.
- **/
+
 package org.usfirst.frc.team5852.robot;
 
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.*;
 
 public class Robot extends IterativeRobot {
 
 	private static final String kDefaultAuto  = "Default";
-	private static final String kBaselineAuto = "BaselineAuto";
-	private static final String kSwitchAuto   = "SwitchAuto";
-	private static final String kEncoderTest  = "EncoderTest";
+	private static final String kEncoderCenter= "EncoderCenter";
+	private static final String kEncoderLeft  = "EncoderLeft";
+	private static final String kEncoderRight = "EncoderRight";
 	private String m_autoSelected;
 	private SendableChooser<String> m_chooser = new SendableChooser<>();
 	String gameData;
-
+	
 	//Speed Controllers
-
 	Spark frontLeft  = new Spark(0);
 	Spark rearLeft   = new Spark(1);
 	Spark frontRight = new Spark(2);
@@ -33,16 +32,20 @@ public class Robot extends IterativeRobot {
 	SpeedControllerGroup left  = new SpeedControllerGroup(frontLeft, rearLeft);
 	SpeedControllerGroup right = new SpeedControllerGroup(frontRight, rearRight);
 
+	//Limit Switch
+	DigitalInput limit = new DigitalInput(4);
+	
 	//Intake
 	Spark intake     = new Spark(4);
-	//Compressor c = new Compressor(0);
+	Compressor c = new Compressor(0);
 
 	//Solenoid4Arm
-	//DoubleSolenoid Grabnoid = new DoubleSolenoid(0,1);
+	DoubleSolenoid Grabnoid = new DoubleSolenoid(0,1);
 
 
 	/**Note: Not sure how our extra mechanical components are going to be, 
 	how they're named etc. */
+	
 	//Drivetrain
 	DifferentialDrive drive = new DifferentialDrive(left, right);
 
@@ -53,7 +56,15 @@ public class Robot extends IterativeRobot {
 	int Xaxis   = 0;
 	int Yaxis   = 1;
 	int buttonretract = 3;
-	int buttonexpand = 4;
+	int buttonexpand  = 4;
+	int buttonup      = 5;
+	int buttondown    = 6;
+
+	//gyro
+	Gyro gyro1 = new ADXRS450_Gyro();
+	double kp = 0.08;
+	double angle = gyro1.getAngle();
+	int step = 1;
 
 	//Encoders
 	Encoder encoderleft  = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
@@ -68,21 +79,12 @@ public class Robot extends IterativeRobot {
 
 	//Sticking with FGPA, not messing with unless we get a bigger sense of what to do
 
-	/**	This was from last year's autonomous, don't know if it will be used this year once we get encoders/do vision processing
-	 * int centerx = 320;
-		int centery = 240;
-	 */
-
-	/** Currently keeping the same joystick system for right now, bar extra components
-	 * from scrappy, like the climber.
-	 */
-
 	@Override
 	public void robotInit() {
 		m_chooser.addDefault("Default Auto", kDefaultAuto);
-		m_chooser.addObject("BaselineAuto", kBaselineAuto);
-		m_chooser.addObject("SwitchAuto", kSwitchAuto);
-		m_chooser.addObject("EncoderTest", kEncoderTest);
+		m_chooser.addObject("EncoderCenter", kEncoderCenter);
+		m_chooser.addObject("EncoderLeft", kEncoderLeft);
+		m_chooser.addObject("EncoderRight", kEncoderRight);
 		SmartDashboard.putData("Auto choices", m_chooser);
 		encoderleft.setMaxPeriod(1);
 		encoderleft.setDistancePerPulse(distanceperpulse);
@@ -90,6 +92,7 @@ public class Robot extends IterativeRobot {
 		encoderright.setDistancePerPulse(distanceperpulse);
 		encoderleft.reset();
 		encoderright.reset();
+		step = 0;
 	}
 
 	/**
@@ -112,6 +115,8 @@ public class Robot extends IterativeRobot {
 		gameData = DriverStation.getInstance().getGameSpecificMessage();
 		encoderleft.reset();
 		encoderright.reset();	
+		gyro1.reset();
+		step = 1;
 	}
 
 	/**
@@ -120,187 +125,331 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousPeriodic() {
 		switch (m_autoSelected) {
-		case kBaselineAuto:
-			while (isAutonomous() && isEnabled())
-			{
-				for (int a = 0; a < 90000; a++)
-				{
-					drive.tankDrive(0.5, 0.5);
-				}
-				Timer.delay(13);
-				break;
-			}
-		case kSwitchAuto:
-			while (isAutonomous() && isEnabled())
-			{
-				if(gameData.charAt(0) == 'L')
-				{
-					//Put left auto code here
-					//Go forward
-					for (int a = 0; a < 200000; a++)
-					{
-						drive.tankDrive(0.5, 0.5);
-					}	
-					Timer.delay(1);
-					//Spin Left
-					for (int b = 0; b < 20000;  b++)
-					{
-						drive.tankDrive(-0.5, 0.5);
-					}
-					//Go Forward
-					for (int c = 0; c < 40000; c++)
-					{
-						drive.tankDrive(0.5, 0.5);
-					}
-					Timer.delay(1);
-					//Spin back Right
-					for (int d = 0; d < 16500;  d++)
-					{
-						drive.tankDrive(0.5,-0.5);
-					}
-					Timer.delay(1);
-					//Go forward to fence
-					for (int e = 0; e < 55000;  e++)
-					{
-						drive.tankDrive(0.5, 0.5);
-					}
-					Timer.delay(10);
-					break;
-				}
-				else {
-					//Put right auto code here
-					//Go forward
-					for (int a = 0; a < 20000; a++)
-					{
-						drive.tankDrive(0.5, 0.5);
-					}	
-					Timer.delay(1);
-					//Spin Right
-					for (int b = 0; b < 20000;  b++)
-					{
-						drive.tankDrive(0.5, -0.5);
-					}
-					//Go Forward
-					for (int c = 0; c < 40000; c++)
-					{
-						drive.tankDrive(0.5, 0.5);
-					}
-					//Spin back Right
-					Timer.delay(1);
-					for (int d = 0; d < 16500;  d++)
-					{
-						drive.tankDrive(-0.5, 0.5);
-					}
-					Timer.delay(1);
-					//Go forward to fence
-					for (int e = 0; e < 55000;  e++)
-					{
-						drive.tankDrive(0.5, 0.5);
-					}
-					Timer.delay(10);
-					break;
-				}
-			}
-		case kEncoderTest:
+
+		case kEncoderCenter:
 			encoderleft.reset();
 			encoderright.reset();
 			while (isAutonomous() && isEnabled())
 			{	
-				System.out.println(encoderright.getDistance());
-				System.out.println(encoderleft.getDistance());
 				if(gameData.charAt(0) == 'L')
 				{
-					if (encoderleft.getDistance() < 6 && encoderright.getDistance() > -6)
-						//encoderleft values at distance 6 is around 8100
-						//encoderright values at distance -6 is around -8350
+					if (step == 1)
 					{
-						drive.tankDrive(0.66, 0.67);
+						while (encoderleft.getDistance() < 6 && encoderright.getDistance() > -6)
+						{
+							drive.tankDrive(0.69, 0.66);
+							//drive.curvatureDrive(0.5,-angle*kp, true);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 2;
 					}
-					else if (encoderright.getDistance() > -7.5)
-						//turns go in increments of 1.5 for kitbot
+					else if (step == 2)
 					{
-						drive.tankDrive(-0.75, 0.75);
+
+						while (gyro1.getAngle() > -90)
+						{
+							drive.tankDrive(-0.6, 0.6);
+							/**
+							 *    NOTE: This formula is something if you wanted a fast to slow turn 
+							 * 
+							 *angle = gyro1.getAngle();
+							{
+								drive.tankDrive(-(angle+90)*0.003 - 0.4, (angle+90)*0.003 + 0.4);
+							}
+							 */
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 3;		
 					}
-					//after turn above, encoder right reads around -8.25/.26, encoder left reads around 4.57
-					else if (encoderleft.getDistance() < 13.57 && encoderright.getDistance() > -19.26)
-						//Added abt. 9 feet.
+					else if (step == 3)
 					{
-						drive.tankDrive(0.67, 0.66);
+						while(encoderleft.getDistance() < 9 && encoderright.getDistance() > -9)
+						{
+							drive.tankDrive(0.69, 0.66);
+							//angle = ((gyro1.getAngle()+90) / 180);
+							//drive.curvatureDrive(0.5,-angle*kp, true);
+							
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 4;
 					}
-					//after drive above, encoders read at abt. 12.35 and -16.36
-					else if (encoderleft.getDistance() < 15.25)
+					else if (step == 4)
 					{
-						drive.tankDrive(0.75, -0.75);
+						while(gyro1.getAngle() < 0)
+						{
+							drive.tankDrive(0.6, -0.6);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 5;
 					}
-					//after turn above, encoders read around 15.53 & -15.51
-					else if (encoderleft.getDistance() < 20.53 && encoderright.getDistance() > -20.51)
-						//6 ft
+					else if (step == 5)
 					{
-						drive.tankDrive(0.67, 0.66);
+						while(encoderleft.getDistance() < 6 && encoderright.getDistance() > -6)
+						{
+							drive.tankDrive(0.69, 0.66);
+							/**angle = ((gyro1.getAngle()+90) / 180);
+							drive.curvatureDrive(0.5,-angle*kp, true);
+							 */
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 6;
 					}
-					//after drive, 20.82 & -21.14
-					else if (encoderleft.getDistance() < 21.91)
-					{
-						drive.tankDrive(0.75, -0.75);
+					else if (step == 6)
+					{	
+						while(gyro1.getAngle() < 90)
+						{
+							drive.tankDrive(0.6, -0.6);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 7;
 					}
-					//encoders read around -19.96 and 22.21
-					else if (encoderleft.getDistance() < 23.21 && encoderright.getDistance() > -20.96)
+					else if (step == 7)
 					{
-						drive.tankDrive(0.5, 0.5);
+						while(encoderleft.getDistance() < 1 && encoderright.getDistance() > -1)
+						{
+							drive.tankDrive(0.69, 0.66);
+							/**angle = ((gyro1.getAngle()+90) / 180);
+							drive.curvatureDrive(0.5,-angle*kp, true);
+							 */
+							intake.set(-0.3);
+						}
+						step = 8;
 					}
-					else
+					else if(step == 8)
 					{
+						Grabnoid.set(DoubleSolenoid.Value.kReverse);
 						drive.tankDrive(0, 0);
 					}
 				}
 				else
 				{
-					if (encoderleft.getDistance() < 6 && encoderright.getDistance() > -6)
-						//encoderleft values at distance 6 is around 8100
-						//encoderright values at distance -6 is around -8350
+					if (step == 1)
 					{
-						drive.tankDrive(0.66, 0.67);
+						while (encoderleft.getDistance() < 6 && encoderright.getDistance() > -6)
+						{
+							drive.tankDrive(0.69, 0.66);
+							//drive.curvatureDrive(0.5,-angle*kp, true);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 2;
 					}
-					else if (encoderleft.getDistance() < 7.5)
-						//turns go in increments of 1.5 for kitbot
+					else if (step == 2)
 					{
-						drive.tankDrive(0.75, -0.75);
+
+						while (gyro1.getAngle() < 90)
+						{
+							drive.tankDrive(0.6, -0.6);
+							/**
+							 *    NOTE: This formula is something if you wanted a fast to slow turn 
+							 * 
+							 *angle = gyro1.getAngle();
+							{
+								drive.tankDrive(-(angle+90)*0.003 - 0.4, (angle+90)*0.003 + 0.4);
+							}
+							 */
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 3;		
 					}
-					//after turn above, encoder right reads around -8.25/.26, encoder left reads around 4.57
-					else if (encoderleft.getDistance() < 19.26 && encoderright.getDistance() > -13.57)
-						//Added abt. 9 feet.
+					else if (step == 3)
 					{
-						drive.tankDrive(0.67, 0.66);
+						while(encoderleft.getDistance() < 9 && encoderright.getDistance() > -9)
+						{
+							drive.tankDrive(0.69, 0.66);
+							/**angle = ((gyro1.getAngle()+90) / 180);
+							drive.curvatureDrive(0.5,-angle*kp, true);
+							 */
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 4;
 					}
-					//after drive above, encoders read at abt. 12.35 and -16.36
-					else if (encoderright.getDistance() > -15.25)
+					else if (step == 4)
 					{
-						drive.tankDrive(0.75, -0.75);
+						while(gyro1.getAngle() > 0)
+						{
+							drive.tankDrive(-0.5, 0.5);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 5;
 					}
-					//after turn above, encoders read around 15.53 & -15.51
-					else if (encoderleft.getDistance() < 20.51 && encoderright.getDistance() > -20.53)
-						//6 ft
+					else if (step == 5)
 					{
-						drive.tankDrive(0.67, 0.66);
+						while(encoderleft.getDistance() < 6 && encoderright.getDistance() > -6)
+						{
+							drive.tankDrive(0.69, 0.66);
+							/**angle = ((gyro1.getAngle()+90) / 180);
+							drive.curvatureDrive(0.5,-angle*kp, true);
+							 */
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 6;
 					}
-					//after drive, 20.82 & -21.14
-					else if (encoderright.getDistance() < -21.91)
+					else if (step == 6)
+					{	
+						while(gyro1.getAngle() > -90)
+						{
+							drive.tankDrive(-0.6, 0.6);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 7;
+					}
+					else if (step == 7)
 					{
-						drive.tankDrive(0.75, -0.75);
+						while(encoderleft.getDistance() < 1 && encoderright.getDistance() > -1)
+						{
+							drive.tankDrive(0.69, 0.66);
+							/**angle = ((gyro1.getAngle()+90) / 180);
+							drive.curvatureDrive(0.5,-angle*kp, true);
+							 */
+							intake.set(-0.5);
+						}
+						step = 8;
 					}
-					//encoders read around -19.96 and 22.21
-					else if (encoderleft.getDistance() < 23.21 && encoderright.getDistance() > -20.96)
+					else if(step == 8)
 					{
-						drive.tankDrive(0.5, 0.5);
+						Grabnoid.set(DoubleSolenoid.Value.kReverse);
+						drive.tankDrive(0, 0);
 					}
-					else
+
+				}
+			}
+			break;
+		case kEncoderLeft:
+			encoderleft.reset();
+			encoderright.reset();
+			while(isAutonomous() && isEnabled())
+			{
+				if(gameData.charAt(0) == 'L')
+				{
+					if (step == 1)
+					{
+						while(encoderleft.getDistance() < 11 && encoderright.getDistance() > -11)
+						{
+							drive.tankDrive(0.69, 0.66);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 2;
+					}
+					else if (step == 2)
+					{
+						while(gyro1.getAngle() < 90)
+						{
+							drive.tankDrive(0.6, -0.6);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 3;
+					}
+					else if (step == 3)
+					{
+						while(encoderleft.getDistance() < 1 && encoderright.getDistance() > -1)
+						{
+							drive.tankDrive(0.69, 0.66);
+							intake.set(-0.5);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 4;
+					}
+					else if (step == 4)
+					{
+						drive.tankDrive(0, 0);
+						Grabnoid.set(DoubleSolenoid.Value.kReverse);
+					}
+				}
+				else
+				{
+					if (step == 1)
+					{
+						while(encoderleft.getDistance() < 11 && encoderright.getDistance() > -11)
+						{
+							drive.tankDrive(0.69, 0.66);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 2;
+					}
+					else if (step == 2)
 					{
 						drive.tankDrive(0, 0);
 					}
 				}
-				 
 			}
-			break;
+		case kEncoderRight:
+			encoderleft.reset();
+			encoderright.reset();
+			while(isAutonomous() && isEnabled())
+			{
+				if(gameData.charAt(0) == 'R')
+				{
+					if (step == 1)
+					{
+						while(encoderleft.getDistance() < 11 && encoderright.getDistance() > -11)
+						{
+							drive.tankDrive(0.69, 0.66);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 2;
+					}
+					else if (step == 2)
+					{
+						while(gyro1.getAngle() > -90)
+						{
+							drive.tankDrive(-0.6, 0.6);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 3;
+					}
+					else if (step == 3)
+					{
+						while(encoderleft.getDistance() < 1 && encoderright.getDistance() > -1)
+						{
+							drive.tankDrive(0.69, 0.66);
+							intake.set(-0.5);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 4;
+					}
+					else if (step == 4)
+					{
+						drive.tankDrive(0, 0);
+						Grabnoid.set(DoubleSolenoid.Value.kReverse);
+					}
+				}
+				else
+				{
+					if (step == 1)
+					{
+						while(encoderleft.getDistance() < 11 && encoderright.getDistance() > -11)
+						{
+							drive.tankDrive(0.69, 0.66);
+						}
+						encoderleft.reset();
+						encoderright.reset();
+						step = 2;
+					}
+					else if (step == 2)
+					{
+						drive.tankDrive(0, 0);
+					}
+				}
+			}
 		case kDefaultAuto:
 		default:
 			// Put default auto code here Encoder TEST
@@ -314,30 +463,52 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() 
 	{
-		//encoderright.reset();
-		//encoderleft.reset();
+		step = 0;
+		encoderright.reset();
+		encoderleft.reset();
 		while(isOperatorControl() && isEnabled())
 		{
 			SmartDashboard.putNumber("Encoder Right", encoderright.getDistance());
 			SmartDashboard.putNumber("Encoder Left", encoderleft.getDistance());
 			drive.arcadeDrive(-Joy.getY(), Joy.getX());
 
-			//c.setClosedLoopControl(true);
+			//pneumatics
+			c.setClosedLoopControl(true);
 
-			//Grabnoid.set(DoubleSolenoid.Value.kOff);
+			Grabnoid.set(DoubleSolenoid.Value.kOff);
 
-			//if(Joy.getRawButton(buttonretract))
-			/**{
+			//pneumatics control
+			if(Joy.getRawButton(buttonretract))
+			{
 				Grabnoid.set(DoubleSolenoid.Value.kForward);
 			}
 			if(Joy.getRawButton(buttonexpand))
 			{
 				Grabnoid.set(DoubleSolenoid.Value.kReverse);
 			}
-			 */
-			/**BIGNOTE: Remember to code in extra components once the team comes to consensus
-			 * 
-			 */
+
+			//arm control
+			if(Joy.getRawButton(buttonup) && Joy.getRawButton(buttondown))
+			{
+				intake.set(0);
+			}
+			
+			else if(Joy.getRawButton(buttonup))
+			{
+				intake.set(0.5);
+			}	
+			else if(limit.get() && Joy.getRawButton(buttondown))
+			{
+				intake.set(0);
+			}
+			else if(Joy.getRawButton(buttondown))
+			{
+				intake.set(-0.5);
+			}
+			else
+			{
+				intake.set(0);
+			}
 		}
 	}
 
